@@ -125,7 +125,7 @@ def explain_pending_query_llm(question: str, active_task: dict) -> str:
     
     system_prompt = (
         "You are a friendly SQL Database Analyst. There is a pending SQL query awaiting execution.\n"
-        "Explain the query to the user in Indonesian, addressing their specific question/concern.\n"
+        "Explain the query to the user in English, addressing their specific question/concern.\n"
         "Keep your explanation clear, concise, and focused on helping them decide whether to run it.\n\n"
         f"Pending SQL Query:\n{active_task.get('sql_query', '')}\n"
         f"Task Description:\n{active_task.get('description', '')}"
@@ -142,17 +142,15 @@ def explain_pending_query_llm(question: str, active_task: dict) -> str:
         # Append interactive helper guidance at the end
         return (
             f"{explanation}\n\n"
-            "Belum saya eksekusi. Kalau Anda klik Jalankan Query, query tersebut akan dijalankan ke database AWS RDS "
-            "untuk mengambil hasilnya. Kalau query-nya belum sesuai, klik Batalkan lalu kirim pertanyaan yang lebih spesifik."
+            "This query has not been executed yet. If you click 'Run Query', the SQL statement will be run against the AWS RDS database to retrieve the results. If this query does not look correct, click 'Cancel' and send a more specific question."
         )
     except Exception as e:
         print(f"  -> Error generating query explanation: {e}")
         # Fallback description
-        desc = active_task.get("description") or "menjawab pertanyaan analitik sebelumnya"
+        desc = active_task.get("description") or "complete the pending analytical task"
         return (
-            f"Query itu dibuat untuk: {desc}\n\n"
-            "Belum saya eksekusi. Kalau Anda klik Jalankan Query, query tersebut akan dijalankan ke database AWS RDS "
-            "untuk mengambil hasilnya. Kalau query-nya belum sesuai, klik Batalkan lalu kirim pertanyaan yang lebih spesifik."
+            f"This query was generated to: {desc}\n\n"
+            "This query has not been executed yet. If you click 'Run Query', the SQL statement will be run against the AWS RDS database to retrieve the results. If this query does not look correct, click 'Cancel' and send a more specific question."
         )
 
 @app.post("/api/chat")
@@ -202,7 +200,7 @@ async def chat_endpoint(payload: ChatRequest):
                         "thread_id": thread_id,
                         "query": result["query"],
                         "generated_sql": agent_sql,
-                        "final_answer": "Query sebelumnya berhasil. Saya telah merancang query SQL baru berikut. Apakah Anda ingin mengeksekusinya?"
+                        "final_answer": "The previous query executed successfully. I have designed the following new SQL query. Do you want to execute it?"
                     }
                     
                 return {
@@ -222,11 +220,11 @@ async def chat_endpoint(payload: ChatRequest):
                 idx = state_info.values.get("current_task_idx", 0)
                 if idx < len(current_plan):
                     current_plan[idx]["status"] = "failed"
-                    current_plan[idx]["error_message"] = "Eksekusi SQL dibatalkan oleh pengguna."
+                    current_plan[idx]["error_message"] = "SQL execution was canceled by the user."
                     
                 agent_graph.update_state(config, {
                     "plan": current_plan,
-                    "final_answer": "Eksekusi SQL dibatalkan oleh pengguna."
+                    "final_answer": "SQL execution was canceled by the user."
                 })
                 # Resume to clear the interrupt from checkpointer memory
                 agent_graph.invoke(None, config)
@@ -234,7 +232,7 @@ async def chat_endpoint(payload: ChatRequest):
                 return {
                     "status": "canceled",
                     "thread_id": thread_id,
-                    "final_answer": "Eksekusi SQL dibatalkan. Silakan kirim pertanyaan baru."
+                    "final_answer": "SQL execution was canceled. Please send a new question."
                 }
                 
             elif classification == "DISCUSSION":

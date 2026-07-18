@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let response = await fetch(url, options);
 
         if (response.status === 401) {
-            const newPasscode = prompt("Akses Terkunci: Masukkan passcode demo untuk melanjutkan:");
+            const newPasscode = prompt("Access Locked: Enter the demo passcode to continue:");
             if (newPasscode !== null) {
                 localStorage.setItem('olist_demo_passcode', newPasscode);
                 options.headers['X-Demo-Passcode'] = newPasscode;
@@ -244,10 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update/clear active confirmation container if status resolved
             if (activeConfirmContainer) {
                 if (data.status === 'completed') {
-                    activeConfirmContainer.innerHTML = '<span class="status-text" style="color: var(--success); font-weight:600;"><i class="fa-solid fa-circle-check"></i> Query dijalankan</span>';
+                    activeConfirmContainer.innerHTML = '<span class="status-text" style="color: var(--success); font-weight:600;"><i class="fa-solid fa-circle-check"></i> Query Executed</span>';
                     activeConfirmContainer = null;
                 } else if (data.status === 'canceled') {
-                    activeConfirmContainer.innerHTML = '<span class="status-text" style="color: var(--error); font-weight:600;"><i class="fa-solid fa-circle-xmark"></i> Dibatalkan</span>';
+                    activeConfirmContainer.innerHTML = '<span class="status-text" style="color: var(--error); font-weight:600;"><i class="fa-solid fa-circle-xmark"></i> Canceled</span>';
                     activeConfirmContainer = null;
                 }
             }
@@ -290,16 +290,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update/clear active confirmation container
             if (activeConfirmContainer) {
                 if (data.status === 'completed') {
-                    activeConfirmContainer.innerHTML = '<span class="status-text" style="color: var(--success); font-weight:600;"><i class="fa-solid fa-circle-check"></i> Query dijalankan</span>';
+                    activeConfirmContainer.innerHTML = '<span class="status-text" style="color: var(--success); font-weight:600;"><i class="fa-solid fa-circle-check"></i> Query Executed</span>';
                 } else if (data.status === 'canceled') {
-                    activeConfirmContainer.innerHTML = '<span class="status-text" style="color: var(--error); font-weight:600;"><i class="fa-solid fa-circle-xmark"></i> Dibatalkan</span>';
+                    activeConfirmContainer.innerHTML = '<span class="status-text" style="color: var(--error); font-weight:600;"><i class="fa-solid fa-circle-xmark"></i> Canceled</span>';
                 }
                 activeConfirmContainer = null;
             }
 
         } catch (error) {
             typingIndicator.style.display = 'none';
-            appendMessage('bot', `Terjadi kesalahan saat konfirmasi: **${error.message}**`);
+            appendMessage('bot', `An error occurred during confirmation: **${error.message}**`);
         }
     }
 
