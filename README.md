@@ -59,11 +59,11 @@ graph TD
         GlobalCritic -- "REJECT (Re-plan)" --> Planner
     end
     
-    subgraph Data Layer (AWS RDS PostgreSQL)
-        Runner & AutoRunner -->|Query SELECT| SemanticViews[(PostgreSQL Semantic Views)]
-        SemanticViews -.->|v_order_items_detailed| Table1[(order_items + orders + products)]
-        SemanticViews -.->|v_order_payments_detailed| Table2[(order_payments + customers)]
-        SemanticViews -.->|v_order_reviews_detailed| Table3[(order_reviews + customers)]
+    subgraph "Data Layer (AWS RDS PostgreSQL)"
+        Runner & AutoRunner -->|Query SELECT| SemanticViews[("PostgreSQL Semantic Views")]
+        SemanticViews -.->|v_order_items_detailed| Table1[("order_items + orders + products")]
+        SemanticViews -.->|v_order_payments_detailed| Table2[("order_payments + customers")]
+        SemanticViews -.->|v_order_reviews_detailed| Table3[("order_reviews + customers")]
     end
     
     GlobalCritic -- "APPROVED" --> Output([Final Answer to User])
