@@ -171,26 +171,26 @@ def make_clarification_plan(message: str) -> List[Dict[str, Any]]:
 
 DIRECT_INTENT_MESSAGES = {
     "greeting": (
-        "Halo! Saya adalah asisten analisis data e-commerce Olist. "
-        "Saya bisa membantu Anda mencari data penjualan, performa produk, ulasan pelanggan, dan metrik operasional lainnya. "
-        "Ada yang ingin Anda tanyakan?"
+        "Hello! I am your Olist e-commerce data analyst assistant. "
+        "I can help you explore sales data, product performance, customer reviews, and other operational metrics. "
+        "What would you like to ask?"
     ),
     "help_request": (
-        "Saya bisa membantu analisis data Olist, misalnya menghitung total penjualan, melihat kategori produk terlaris, "
-        "membandingkan metode pembayaran, mengecek ulasan pelanggan, atau menganalisis pengiriman. "
-        "Silakan tanyakan metrik atau periode historis yang ingin Anda cek."
+        "I can help you analyze Olist data, such as calculating total sales, finding top-selling product categories, "
+        "comparing payment methods, checking customer reviews, or analyzing delivery performance. "
+        "Please ask about any metric or historical period you'd like to explore."
     ),
     "out_of_scope": (
-        "Maaf, pertanyaan itu tidak relevan dengan dataset e-commerce Olist. "
-        "Saya hanya dapat membantu analisis data seputar penjualan, pesanan, produk, pelanggan, pembayaran, ulasan, seller, dan pengiriman Olist."
+        "Sorry, that question is not relevant to the Olist e-commerce dataset. "
+        "I can only assist with data analysis related to sales, orders, products, customers, payments, reviews, sellers, and shipping on Olist."
     ),
     "ambiguous_time": (
-        "Dataset Olist berisi data historis dari 2016 hingga 2018, dengan periode transaksi terakhir yang tersedia sekitar Agustus 2018. "
-        "Periode spesifik mana yang ingin Anda cek?"
+        "The Olist dataset contains historical data from 2016 to 2018, with the last available transaction period around August 2018. "
+        "Which specific period would you like to check?"
     ),
     "ambiguous_analytics": (
-        "Pertanyaan Anda masih terlalu umum. Untuk analisis performa penjualan, metrik apa yang ingin Anda lihat: "
-        "total omzet, jumlah order, jumlah item terjual, tren bulanan, kategori terlaris, atau performa seller?"
+        "Your question is still too general. For sales performance analysis, which metric would you like to see: "
+        "total revenue, order count, number of items sold, monthly trends, best-selling categories, or seller performance?"
     ),
 }
 

@@ -1,5 +1,61 @@
 document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------
+    // PASSCODE GATE (runs immediately on page load)
+    // ----------------------------------------
+    const passcodeGate = document.getElementById('passcode-gate');
+    const passcodeInput = document.getElementById('passcode-input');
+    const passcodeSubmit = document.getElementById('passcode-submit');
+    const passcodeError = document.getElementById('passcode-error');
+
+    async function checkPasscodeRequired() {
+        const storedPasscode = localStorage.getItem('olist_demo_passcode') || '';
+        try {
+            const res = await fetch('/api/tables', {
+                headers: { 'X-Demo-Passcode': storedPasscode }
+            });
+            if (res.status === 401) {
+                // Passcode protection is active and stored passcode is invalid
+                passcodeGate.style.display = 'flex';
+            }
+            // If 200 or any other status, passcode is valid or not required
+        } catch (e) {
+            // Network error or API not available - don't block the UI
+        }
+    }
+
+    if (passcodeSubmit) {
+        passcodeSubmit.addEventListener('click', async () => {
+            const entered = passcodeInput.value.trim();
+            if (!entered) return;
+
+            passcodeSubmit.disabled = true;
+            passcodeSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+
+            try {
+                const res = await fetch('/api/tables', {
+                    headers: { 'X-Demo-Passcode': entered }
+                });
+                if (res.status === 401) {
+                    passcodeError.style.display = 'block';
+                    passcodeSubmit.disabled = false;
+                    passcodeSubmit.innerHTML = '<i class="fa-solid fa-unlock"></i> Unlock Access';
+                } else {
+                    localStorage.setItem('olist_demo_passcode', entered);
+                    passcodeGate.style.display = 'none';
+                }
+            } catch (e) {
+                passcodeGate.style.display = 'none';
+            }
+        });
+
+        passcodeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') passcodeSubmit.click();
+        });
+    }
+
+    // Fire the check immediately
+    checkPasscodeRequired();
+    // ----------------------------------------
     // STATE & DOMELEMENTS
     // ----------------------------------------
     const navButtons = document.querySelectorAll('.nav-btn');

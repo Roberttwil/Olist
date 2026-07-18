@@ -1,4 +1,5 @@
 import os
+import re as re_module
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -6,6 +7,18 @@ from pydantic import BaseModel
 from sqlalchemy import inspect, text
 from database import get_engine, execute_query
 from agent import create_agent_graph
+
+def sanitize_error_message(error_msg: str) -> str:
+    """Strip API keys, credentials, and sensitive info from error messages before sending to frontend."""
+    # Remove Groq API keys (gsk_...)
+    sanitized = re_module.sub(r'gsk_[A-Za-z0-9_-]+', '[REDACTED_API_KEY]', error_msg)
+    # Remove AWS RDS connection strings
+    sanitized = re_module.sub(r'postgresql://[^\s]+', '[REDACTED_DB_URL]', sanitized)
+    # Remove any remaining key-like patterns
+    sanitized = re_module.sub(r'api[_-]?key["\']?\s*[:=]\s*["\']?[A-Za-z0-9_-]{20,}', '[REDACTED]', sanitized, flags=re_module.IGNORECASE)
+    # Remove Bearer tokens
+    sanitized = re_module.sub(r'Bearer\s+[A-Za-z0-9_.-]+', 'Bearer [REDACTED]', sanitized)
+    return sanitized
 
 app = FastAPI(title="Olist SQL Agent Web Service")
 
@@ -329,11 +342,11 @@ async def chat_endpoint(payload: ChatRequest):
         
         if "rate_limit" in error_msg.lower() or "429" in error_msg:
             sanitized_detail = (
-                "Batas kuota API (Rate Limit) dari penyedia layanan AI terlampaui. "
-                "Silakan tunggu beberapa menit sebelum mencoba lagi."
+                "The AI provider's API rate limit has been exceeded. "
+                "Please wait a few minutes before trying again."
             )
         else:
-            sanitized_detail = "Terjadi kesalahan internal pada sistem saat memproses data Anda. Silakan coba beberapa saat lagi."
+            sanitized_detail = "An internal error occurred while processing your request. Please try again shortly."
             
         raise HTTPException(status_code=500, detail=sanitized_detail)
 
@@ -394,7 +407,7 @@ async def confirm_endpoint(payload: ConfirmRequest):
                 "thread_id": payload.thread_id,
                 "query": result["query"],
                 "generated_sql": agent_sql,
-                "final_answer": "Query sebelumnya berhasil. Saya telah merancang query SQL baru berikut. Apakah Anda ingin mengeksekusinya?"
+                "final_answer": "The previous query executed successfully. I have designed the following new SQL query. Do you want to execute it?"
             }
             
         return {
@@ -410,7 +423,7 @@ async def confirm_endpoint(payload: ConfirmRequest):
     except Exception as e:
         error_msg = str(e)
         print(f"ERROR: Exception in confirm endpoint: {error_msg}")
-        raise HTTPException(status_code=500, detail=f"Terjadi kesalahan saat mengeksekusi SQL: {error_msg}")
+        raise HTTPException(status_code=500, detail=f"An internal error occurred while executing the SQL query. Please try again shortly.")
 
 @app.get("/api/tables")
 def list_tables():
@@ -449,7 +462,7 @@ def list_tables():
                 })
         return result_list
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=sanitize_error_message(str(e)))
 
 @app.get("/api/tables/{table_name}/data")
 def get_table_data(table_name: str, page: int = 1, page_size: int = 50):
@@ -500,7 +513,7 @@ def get_table_data(table_name: str, page: int = 1, page_size: int = 50):
             }
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=sanitize_error_message(str(e)))
 
 schema_cache = {}
 
@@ -594,7 +607,7 @@ def get_table_details(table_name: str, page: int = 1, page_size: int = 50):
             }
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=sanitize_error_message(str(e)))
 
 class QueryRequest(BaseModel):
     sql: str
@@ -611,7 +624,7 @@ def run_custom_query(payload: QueryRequest):
             "data": results
         }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=sanitize_error_message(str(e)))
 
 # Fallback to serve static web pages
 @app.get("/")

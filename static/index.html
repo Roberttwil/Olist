@@ -14,6 +14,20 @@
     <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
+    <!-- Passcode Gate Modal (blocks UI until authenticated) -->
+    <div id="passcode-gate" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(10,10,30,0.92); backdrop-filter:blur(12px); display:flex; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; padding:40px 36px; max-width:400px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <i class="fa-solid fa-lock" style="font-size:42px; color:#6366f1; margin-bottom:16px;"></i>
+            <h2 style="margin:0 0 8px; font-family:'Inter',sans-serif; font-size:22px; color:#1e293b;">Access Protected</h2>
+            <p style="margin:0 0 24px; font-family:'Inter',sans-serif; font-size:14px; color:#64748b; line-height:1.5;">This demo is passcode-protected to prevent API abuse.<br>Enter the demo passcode to continue.</p>
+            <input id="passcode-input" type="password" placeholder="Enter passcode..." style="width:100%; padding:12px 16px; border:2px solid #e2e8f0; border-radius:10px; font-size:15px; font-family:'Inter',sans-serif; outline:none; box-sizing:border-box; transition:border-color 0.2s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+            <p id="passcode-error" style="display:none; margin:10px 0 0; color:#ef4444; font-size:13px; font-family:'Inter',sans-serif;">Incorrect passcode. Please try again.</p>
+            <button id="passcode-submit" style="margin-top:16px; width:100%; padding:12px; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                <i class="fa-solid fa-unlock"></i> Unlock Access
+            </button>
+        </div>
+    </div>
+
     <div class="app-container">
         <!-- Sidebar/Navbar Top -->
         <header class="app-header">
