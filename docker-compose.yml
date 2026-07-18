@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: olist-sql-agent:latest
+    container_name: olist_agent_container
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: unless-stopped

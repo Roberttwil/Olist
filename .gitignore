@@ -1,0 +1,40 @@
+# Environment variables / credentials
+.env
+.env.*
+!.env.template
+
+# Python virtual environment
+olist-venv/
+venv/
+.venv/
+env/
+active/
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Log files
+*.log
+.system_generated/
+scratch/
+
+# Database / temporary data files
+data/
+*.db
+*.sqlite
+
+# Testing caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

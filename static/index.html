@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olist AI SQL Agent Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css?v=7">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar/Navbar Top -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-text">
+                    <h1>Olist <span>SQL Agent</span></h1>
+                    <p>Agentic E-Commerce Data Analytics</p>
+                </div>
+            </div>
+            
+            <nav class="tab-navigation">
+                <button class="nav-btn active" data-tab="chat-tab">
+                    <i class="fa-solid fa-comments"></i> SQL Chatbot
+                </button>
+                <button class="nav-btn" data-tab="explorer-tab">
+                    <i class="fa-solid fa-database"></i> Database Explorer
+                </button>
+            </nav>
+
+            <div class="db-status">
+                <span class="status-dot online"></span>
+                <span class="status-text">AWS RDS Online</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="app-main">
+            
+            <!-- Tab 1: Chatbot Interface -->
+            <section id="chat-tab" class="tab-content active">
+                <div class="chat-layout">
+                    <!-- Left Info Column -->
+                    <div class="chat-info-sidebar">
+                        <div class="info-card">
+                            <h3><i class="fa-solid fa-wand-magic-sparkles"></i> AI Agent Capabilities</h3>
+                            <p>Ask analytical business questions in natural language. The agent will autonomously:</p>
+                            <ul>
+                                <li><i class="fa-solid fa-circle-check"></i> Inspect the PostgreSQL schema</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Generate valid SQL statement</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Self-heal up to 3x if errors occur</li>
+                                <li><i class="fa-solid fa-circle-check"></i> Synthesize clean business insights</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="info-card suggestions">
+                            <h3><i class="fa-solid fa-lightbulb"></i> Try Asking:</h3>
+                            <button class="suggest-btn">Which cities have the highest number of customers?</button>
+                            <button class="suggest-btn">What is the average review score for our orders?</button>
+                            <button class="suggest-btn">Show me the top 5 product categories by item sold count</button>
+                        </div>
+                    </div>
+
+                    <!-- Main Chat Column -->
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages">
+                            <!-- Welcome Message -->
+                            <div class="message bot-message welcome-box">
+                                <div class="message-avatar">
+                                    <i class="fa-solid fa-robot"></i>
+                                </div>
+                                <div class="message-content">
+                                    <h2>Hello, Applied AI Engineer!</h2>
+                                    <p>I am your autonomous SQL agent connected to your Olist RDS PostgreSQL instance. Ask me anything about the data!</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Typing Indicator -->
+                        <div class="typing-indicator" id="typing-indicator">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="indicator-text">Agent is thinking, inspecting schema, and executing SQL...</span>
+                        </div>
+
+                        <!-- Input Area -->
+                        <div class="chat-input-area">
+                            <form id="chat-form" class="chat-input-form">
+                                <input type="text" id="chat-input" placeholder="Type your e-commerce analysis question here..." required autocomplete="off">
+                                <button type="submit" class="send-btn" id="send-button">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab 2: Database Explorer -->
+            <section id="explorer-tab" class="tab-content">
+                <div class="explorer-layout">
+                    <!-- Left Sidebar (Tables List) -->
+                    <div class="tables-sidebar">
+                        <h3 id="explorer-sidebar-title" style="cursor: pointer;"><i class="fa-solid fa-table-list"></i> Database Tables</h3>
+                        <button class="sql-editor-trigger-btn" id="sql-editor-trigger-btn">
+                            <i class="fa-solid fa-terminal"></i> Run Custom SQL Query
+                        </button>
+                        <div class="tables-list" id="tables-list">
+                            <!-- Dynamically loaded list of tables -->
+                            <div class="tables-loading">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Loading tables...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Main Area (Table Schema + Preview) -->
+                    <div class="table-details-container" id="table-details-container">
+                        <div class="schema-guide-container">
+                            <div class="guide-header">
+                                <h2>Olist Database Schema Guide</h2>
+                                <p>This dashboard is connected to the real, public <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" class="kaggle-link">Olist Brazilian E-Commerce Dataset</a> on Kaggle.</p>
+                            </div>
+                            
+                            <!-- Schema Map Visualizer -->
+                            <div class="schema-map-card">
+                                <h3>Database Relationship Map (ERD)</h3>
+                                <div style="text-align: center; padding: 12px; background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; display: flex; justify-content: center; align-items: center;">
+                                    <img src="erd.png" alt="Olist DB ERD Schema Map" style="max-width: 100%; height: auto; border-radius: var(--radius-sm); border: 1px solid #f1f5f9; display: block;">
+                                </div>
+                            </div>
+
+                            <!-- Tips and Guides -->
+                            <div class="guide-tips-grid">
+                                <div class="tip-card">
+                                    <h4>customer_id vs customer_unique_id</h4>
+                                    <p><strong>customer_id:</strong> A temporary key generated for each order session. Use this to JOIN <code>orders</code> and <code>customers</code>.</p>
+                                    <p><strong>customer_unique_id:</strong> The actual identifier of a physical customer. Use this to count unique buyers or track repeat purchases.</p>
+                                </div>
+                                <div class="tip-card">
+                                    <h4>order_purchase_timestamp vs shipping_limit_date</h4>
+                                    <p><strong>order_purchase_timestamp:</strong> The actual date and time when the order occurred. Use this for all sales, freight, or order volume date-filtering.</p>
+                                    <p><strong>shipping_limit_date:</strong> The deadline/limit for the seller to ship the product. Do NOT use this as order date filters.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- App Logic -->
+    <script src="app.js?v=7"></script>
+</body>
+</html>
