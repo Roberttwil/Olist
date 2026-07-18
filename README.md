@@ -22,6 +22,7 @@ The agent does not just naively generate SQL and run it. It runs an advanced **P
 The graph below illustrates how user requests flow dynamically through schema inspection, planning, execution, and local/global audits:
 
 ```mermaid
+%%{init: {'theme': 'neutral'}}%%
 graph TD
     User([User Input]) --> IntentClass[intent_classifier]
 
