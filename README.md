@@ -23,49 +23,49 @@ The graph below illustrates how user requests flow dynamically through schema in
 
 ```mermaid
 graph TD
-    User([User Input]) --> SchemaInspect[schema_inspector]
-    
+    User([User Input]) --> IntentClass[intent_classifier]
+
     subgraph Multi-Agent Core
+        %% Intent classification gate
+        IntentClass --> IntentRouter{intent_router}
+        IntentRouter -- "greeting / out-of-scope" --> Synthesizer[global_synthesizer]
+        IntentRouter -- "analytical_query" --> SchemaInspect[schema_inspector]
+
         SchemaInspect --> Planner[planner_node]
-        
-        %% Decision Routing
-        Planner --> CheckScope{Check Task Status}
-        
-        %% Clarification / Greetings Shortcut
-        CheckScope -- "clarification_needed" --> Synthesizer[global_synthesizer]
-        
-        %% SQL Executions
-        CheckScope -- "pending" --> Executor[task_executor_node]
-        
-        %% Hybrid Routing Edge
-        Executor --> ExecRouter{Execution Router}
-        ExecRouter -- "requires_approval = true" --> Runner[query_runner_node - INTERRUPTED]
-        ExecRouter -- "requires_approval = false" --> AutoRunner[auto_query_runner_node]
-        
-        Runner --> TaskCritic[task_critic_node]
-        AutoRunner --> TaskCritic
-        
-        %% Self-Healing Loop
-        TaskCritic -- "FAILED (Retry)" --> Executor
-        TaskCritic -- "SUCCESS" --> CheckNextTask{Check Next Task}
-        
-        CheckNextTask -- "More Tasks" --> Executor
-        CheckNextTask -- "All Done" --> Synthesizer
-        
-        %% Quality Assurance Audit
+
+        %% Planner task routing
+        Planner --> TaskRouter{task_router}
+        TaskRouter -- "clarification_needed" --> Synthesizer
+        TaskRouter -- "pending tasks" --> Executor[task_executor_node]
+
+        %% Hybrid approval routing
+        Executor --> ExecRouter{execution_router}
+        ExecRouter -- "requires_approval = true" --> Runner["query_runner (INTERRUPTED)"]
+        ExecRouter -- "requires_approval = false" --> AutoRunner[auto_query_runner]
+
+        %% Local critic router - immediate self-healing retry
+        Runner --> LocalRouter{local_critic_router}
+        AutoRunner --> LocalRouter
+        LocalRouter -- "FAILED & retries < 3" --> Executor
+        LocalRouter -- "otherwise" --> TaskCritic[task_critic_node]
+
+        %% Task critic reuses task_router
+        TaskCritic --> TaskRouter2{task_router}
+        TaskRouter2 -- "More Tasks" --> Executor
+        TaskRouter2 -- "All Done" --> Synthesizer
+
+        %% Global quality audit
         Synthesizer --> GlobalCritic[global_critic_node]
-        
-        %% Audit Re-planning Loop
-        GlobalCritic -- "REJECT (Re-plan)" --> Planner
+        GlobalCritic -- "REJECT & retries < 2" --> Planner
     end
-    
+
     subgraph "Data Layer (AWS RDS PostgreSQL)"
-        Runner & AutoRunner -->|Query SELECT| SemanticViews[("PostgreSQL Semantic Views")]
+        Runner & AutoRunner -->|SELECT query| SemanticViews[("PostgreSQL Semantic Views")]
         SemanticViews -.->|v_order_items_detailed| Table1[("order_items + orders + products")]
         SemanticViews -.->|v_order_payments_detailed| Table2[("order_payments + customers")]
         SemanticViews -.->|v_order_reviews_detailed| Table3[("order_reviews + customers")]
     end
-    
+
     GlobalCritic -- "APPROVED" --> Output([Final Answer to User])
 ```
 
