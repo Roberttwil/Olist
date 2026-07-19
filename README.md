@@ -90,24 +90,19 @@ We deployed 3 database views to pre-clean relationships and **shrink schema cont
 
 ---
 
-## 🔒 Vercel Deployment & API Abuse Protection (Groq Key Safeguards)
+## 🌐 Live Demo & Security (API Abuse Protection)
 
-If you deploy your chatbot frontend publicly (e.g., to Vercel), anyone visiting the site could spam requests and drain your free Groq API keys. To prevent this, this project features **Passcode Demo Gatekeeping**:
+The application is deployed and available for interactive testing:
+*   **Live URL:** **[https://olist-chatbot.vercel.app/](https://olist-chatbot.vercel.app/)**
+*   **Access Passcode:** **`olist2026`**
 
-### 1. How It Works
-*   **Backend Protection:** A global FastAPI middleware (`check_demo_passcode_middleware`) intercepts all `/api/*` endpoints. If the environment variable `DEMO_PASSCODE` is set (e.g. `DEMO_PASSCODE=olist2026`), the backend demands a matching passcode in the `X-Demo-Passcode` HTTP header.
-*   **Frontend Authentication Wrapper (`app.js`):** The frontend wraps all network calls in an `authenticatedFetch` helper. If the backend returns `401 Unauthorized` (passcode missing or incorrect), the browser pops up a passcode prompt. The entered passcode is saved to `localStorage` so recruiters only have to type it once.
-*   **Security:** Unauthorized scraper bots or public visitors cannot make LLM calls or access AWS RDS.
+### 🛡️ Why is there a passcode?
+Since this portfolio project connects to a live **AWS RDS PostgreSQL** instance and utilizes the **Groq API**, it is vulnerable to quota depletion from generic scraper bots. To safeguard the API keys and database from abuse, a **Passcode Gatekeeping** architecture was implemented:
 
-### 2. Setting Up Passcode Protection
-Add this line to your `.env` file on Vercel or your hosting provider:
-```env
-DEMO_PASSCODE=olist2026
-```
-*(Leave it blank or commented out in your local development environment to bypass the passcode check on localhost).*
+1.  **Backend Gatekeeping:** A custom FastAPI middleware intercepts all `/api/*` requests. If `DEMO_PASSCODE` is configured on the host, the backend rejects any requests lacking a matching `X-Demo-Passcode` HTTP header with a `401 Unauthorized` status.
+2.  **Frontend Authenticated Wrapper:** The client application intercepts `401` responses and displays a sleek fullscreen authentication overlay. Once unlocked, the passcode is persisted securely in the browser's `localStorage` so recruiters only need to enter it once.
+3.  **Bot Prevention:** Automated scraping scripts and unauthorized direct API requests are blocked at the middleware layer, preventing API key depletion and unnecessary database load.
 
-> [!TIP]
-> **Live Demo Access Code:** If you are accessing the deployed live demonstration, enter the passcode **`olist2026`** when prompted by the web interface. This unlocks secure live querying to the AWS RDS database.
 
 ---
 
