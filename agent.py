@@ -643,7 +643,7 @@ def task_executor_node(state: AgentState) -> Dict[str, Any]:
     else:
         messages.append(HumanMessage(content=f"Sub-task to complete: {active_task['description']}"))
         
-    response = invoke_llm_with_retry(get_small_llm, messages, is_large=False)
+    response = invoke_llm_with_retry(get_large_llm, messages, is_large=True)
     sql_text = response.content.strip()
     
     # Strip markdown wrappers if any
