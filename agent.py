@@ -690,7 +690,8 @@ def query_runner_node(state: AgentState) -> Dict[str, Any]:
     plan = state["plan"]
     active_task = plan[idx]
     # Bypass execution if task was already marked failed due to user cancellation
-    if active_task.get("status") == "failed" and "dibatalkan" in active_task.get("error_message", ""):
+    # Bypass execution if task was already marked failed due to user cancellation
+    if active_task.get("status") == "failed" and ("dibatalkan" in active_task.get("error_message", "") or "canceled" in active_task.get("error_message", "").lower()):
         print("[Node: query_runner] SQL execution was canceled by user. Skipping query run.")
         return {"plan": plan}
         
@@ -808,12 +809,12 @@ def task_critic_node(state: AgentState) -> Dict[str, Any]:
         except Exception as audit_err:
             print(f"  -> Error invoking SQL Auditor: {audit_err}. Proceeding with completed status.")
             
-    if active_task["status"] == "failed" and "dibatalkan" in active_task.get("error_message", ""):
+    if active_task["status"] == "failed" and ("dibatalkan" in active_task.get("error_message", "") or "canceled" in active_task.get("error_message", "").lower()):
         print("  -> Result: CANCELED BY USER. Aborting remaining tasks.")
         return {
             "plan": updated_plan,
             "current_task_idx": len(plan),
-            "final_answer": "Eksekusi SQL dibatalkan oleh pengguna."
+            "final_answer": "SQL execution was canceled by the user."
         }
 
     if active_task["status"] == "failed" and active_task["retry_count"] < 3:
@@ -893,9 +894,8 @@ def global_critic_node(state: AgentState) -> Dict[str, Any]:
     Global Critic (Large Model): Checks if the final answer actually answers the user's intent.
     If flawed, triggers re-planning. Auto-approves clarification.
     """
-    plan = state.get("plan", [])
     if any(
-        task.get("status") == "failed" and "dibatalkan" in task.get("error_message", "")
+        task.get("status") == "failed" and ("dibatalkan" in task.get("error_message", "") or "canceled" in task.get("error_message", "").lower())
         for task in plan
     ):
         print("  -> Global Critic: Auto-approving user-canceled execution.")
@@ -998,7 +998,7 @@ def local_critic_router(state: AgentState):
     active_task = plan[idx]
     
     if active_task["status"] == "failed":
-        if "dibatalkan" in active_task.get("error_message", ""):
+        if "dibatalkan" in active_task.get("error_message", "") or "canceled" in active_task.get("error_message", "").lower():
             return "task_critic"
         if active_task.get("retry_count", 0) < 3:
             return "task_executor"

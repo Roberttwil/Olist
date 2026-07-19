@@ -70,10 +70,10 @@ def main():
                     current_plan = state_info.values.get("plan", [])
                     if idx < len(current_plan):
                         current_plan[idx]["status"] = "failed"
-                        current_plan[idx]["error_message"] = "Eksekusi SQL dibatalkan oleh pengguna."
+                        current_plan[idx]["error_message"] = "SQL execution was canceled by the user."
                     graph.update_state(config, {
                         "plan": current_plan,
-                        "final_answer": "Eksekusi SQL dibatalkan oleh pengguna."
+                        "final_answer": "SQL execution was canceled by the user."
                     })
                     # Resume graph execution to process the cancellation path and clear the interrupt
                     result = graph.invoke(None, config)

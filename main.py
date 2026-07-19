@@ -266,11 +266,11 @@ async def chat_endpoint(payload: ChatRequest):
                 idx = state_info.values.get("current_task_idx", 0)
                 if idx < len(current_plan):
                     current_plan[idx]["status"] = "failed"
-                    current_plan[idx]["error_message"] = "Eksekusi SQL dibatalkan karena pengguna mengirimkan pertanyaan baru."
+                    current_plan[idx]["error_message"] = "SQL execution was canceled because the user sent a new question."
                 
                 agent_graph.update_state(config, {
                     "plan": current_plan,
-                    "final_answer": "Eksekusi SQL dibatalkan."
+                    "final_answer": "SQL execution was canceled."
                 })
                 # Resume to clear the interrupt from checkpointer memory
                 agent_graph.invoke(None, config)
@@ -361,7 +361,7 @@ async def confirm_endpoint(payload: ConfirmRequest):
     if not state_info.next or "query_runner" not in state_info.next:
         return {
             "status": "completed",
-            "final_answer": "Tidak ada eksekusi SQL yang tertunda untuk sesi ini."
+            "final_answer": "No pending SQL execution found for this session."
         }
         
     if not payload.confirm:
@@ -370,11 +370,11 @@ async def confirm_endpoint(payload: ConfirmRequest):
         idx = state_info.values.get("current_task_idx", 0)
         if idx < len(current_plan):
             current_plan[idx]["status"] = "failed"
-            current_plan[idx]["error_message"] = "Eksekusi SQL dibatalkan oleh pengguna."
+            current_plan[idx]["error_message"] = "SQL execution was canceled by the user."
             
         agent_graph.update_state(config, {
             "plan": current_plan,
-            "final_answer": "Eksekusi SQL dibatalkan oleh pengguna."
+            "final_answer": "SQL execution was canceled by the user."
         })
         
         # Resume graph execution to process the cancellation path and clear the interrupt
@@ -383,7 +383,7 @@ async def confirm_endpoint(payload: ConfirmRequest):
         return {
             "status": "canceled",
             "thread_id": payload.thread_id,
-            "final_answer": "Eksekusi SQL dibatalkan. Silakan kirim pertanyaan baru."
+            "final_answer": "SQL execution was canceled. Please send a new question."
         }
         
     try:
