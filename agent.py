@@ -49,15 +49,11 @@ class AgentState(TypedDict, total=False):
 LARGE_MODELS_FALLBACK = [
     "llama-3.3-70b-versatile",
     "openai/gpt-oss-120b",
-    "qwen/qwen3-32b",
-    "qwen/qwen3.6-27b"
 ]
 
 SMALL_MODELS_FALLBACK = [
-    "llama-3.1-8b-instant",
     "qwen/qwen3.6-27b",
-    "qwen/qwen3-32b",
-    "openai/gpt-oss-20b"
+    "openai/gpt-oss-20b",
 ]
 
 # Track active key and model indexes
@@ -67,13 +63,11 @@ current_small_model_idx = 0
 
 def get_groq_api_keys() -> List[str]:
     keys = []
-    key1 = os.getenv("GROQ_API_KEY_1")
-    key2 = os.getenv("GROQ_API_KEY_2")
-    if key1 and "gsk_" in key1:
-        keys.append(key1)
-    if key2 and "gsk_" in key2:
-        keys.append(key2)
-    # Fallback to single GROQ_API_KEY if present
+    for i in range(1, 4):  # supports GROQ_API_KEY_1, _2, _3
+        key = os.getenv(f"GROQ_API_KEY_{i}")
+        if key and "gsk_" in key:
+            keys.append(key)
+    # Fallback to single GROQ_API_KEY if none of the numbered keys found
     if not keys:
         single_key = os.getenv("GROQ_API_KEY")
         if single_key and "gsk_" in single_key:
