@@ -116,19 +116,19 @@ DEMO_PASSCODE=olist2026
 Here are actual verification outputs tested directly on the production container:
 
 ### Test Case 1: Simple Database Retrieval (Auto-Run)
-*   **User Question:** *"berapa pembeli di bekasi?"*
+*   **User Question:** *"how many buyers are in Bekasi?"*
 *   **Agent Classification:** Standard & Confident (`requires_approval = false`).
 *   **SQL Executed automatically:**
     ```sql
     SELECT COUNT(DISTINCT customer_unique_id) FROM customers WHERE customer_city = 'bekasi';
     ```
 *   **Final Answer returned in a single round-trip:**
-    > "Berdasarkan hasil eksekusi query database, jumlah pembeli di Bekasi adalah **0**."
+    > "Based on the database query execution, the number of buyers in Bekasi is **0**."
 
 ---
 
 ### Test Case 2: Complex Comparison Query (Self-Healed, Auto-Run)
-*   **User Question:** *"product apa yg paling laku, apakah produk itu juga yg punya rating tertinggi?"*
+*   **User Question:** *"which product is the best selling, and is that product also the one with the highest rating?"*
 *   **Agent Flow:**
     1.  *First attempt:* Model attempts to INNER JOIN top-sold and top-rated products on `product_id`. Returns `0 rows`.
     2.  *Critic Audit:* Task Critic detects `0 rows` $\rightarrow$ Triggers **AI SQL Auditor** $\rightarrow$ Diagnoses logical error.
@@ -145,10 +145,10 @@ Here are actual verification outputs tested directly on the production container
         ```
     4.  *Execution:* Succeeded.
 *   **Final Answer:**
-    > **Ringkasan Hasil Analisis**
-    > *   **Produk paling laku:** ID `aca2eb7d00ea1a7b8ebd4e68314663af` (Rating: 4.02/5)
-    > *   **Rating rata-rata tertinggi:** 5.00/5 (Produk Lain)
-    > *   **Apakah produk paling laku memiliki rating tertinggi?** Tidak (`No`)
+    > **Analysis Summary**
+    > *   **Best-selling product:** ID `aca2eb7d00ea1a7b8ebd4e68314663af` (Rating: 4.02/5)
+    > *   **Highest average rating:** 5.00/5 (Different Product)
+    > *   **Is the best-selling product also the one with the highest rating?** No
 
 ---
 
