@@ -74,17 +74,23 @@ def get_groq_api_keys() -> List[str]:
             keys.append(single_key)
     return keys
 
-def get_large_llm(api_key: str):
+def get_large_llm(api_key: str, json_mode: bool = False):
     model_name = LARGE_MODELS_FALLBACK[current_large_model_idx % len(LARGE_MODELS_FALLBACK)]
     print(f"Initializing Large Model: {model_name} (using key ending in ...{api_key[-6:]})")
-    return ChatGroq(model=model_name, temperature=0.0, api_key=api_key, timeout=15.0)
+    kwargs = {}
+    if json_mode:
+        kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
+    return ChatGroq(model=model_name, temperature=0.0, api_key=api_key, timeout=15.0, **kwargs)
 
-def get_small_llm(api_key: str):
+def get_small_llm(api_key: str, json_mode: bool = False):
     model_name = SMALL_MODELS_FALLBACK[current_small_model_idx % len(SMALL_MODELS_FALLBACK)]
     print(f"Initializing Small Model: {model_name} (using key ending in ...{api_key[-6:]})")
-    return ChatGroq(model=model_name, temperature=0.0, api_key=api_key, timeout=15.0)
+    kwargs = {}
+    if json_mode:
+        kwargs["model_kwargs"] = {"response_format": {"type": "json_object"}}
+    return ChatGroq(model=model_name, temperature=0.0, api_key=api_key, timeout=15.0, **kwargs)
 
-def invoke_llm_with_retry(llm_creator_fn, messages, is_large=True, max_attempts=8):
+def invoke_llm_with_retry(llm_creator_fn, messages, is_large=True, max_attempts=8, json_mode: bool = False):
     global current_key_idx, current_large_model_idx, current_small_model_idx
     keys = get_groq_api_keys()
     if not keys:
@@ -94,7 +100,7 @@ def invoke_llm_with_retry(llm_creator_fn, messages, is_large=True, max_attempts=
     for attempt in range(max_attempts):
         active_key = keys[current_key_idx % len(keys)]
         try:
-            llm = llm_creator_fn(active_key)
+            llm = llm_creator_fn(active_key, json_mode=json_mode)
             return llm.invoke(messages)
         except Exception as e:
             err_msg = str(e)
@@ -118,30 +124,33 @@ def invoke_llm_with_retry(llm_creator_fn, messages, is_large=True, max_attempts=
             raise e
     raise last_exception or Exception("Failed to invoke LLM after model/key rotation attempts.")
 
-# Helper function to extract a JSON list of tasks from model outputs
 def parse_plan_json(text: str) -> List[Dict[str, Any]]:
-    # Find anything between the first [ and last ]
-    match = re.search(r"\[\s*\{.*\}\s*\]", text, re.DOTALL)
+    # Attempt to load as direct JSON first
+    try:
+        data = json.loads(text.strip())
+        if isinstance(data, dict) and "plan" in data:
+            data = data["plan"]
+        if isinstance(data, list):
+            return data
+    except Exception:
+        pass
+
+    # Find anything between the first [ and last ] or first { and last }
+    match = re.search(r"(\[.*\]|\{.*\})", text, re.DOTALL)
     if match:
         json_str = match.group(0)
     else:
-        # Fallback to try and find any square brackets
-        start = text.find("[")
-        end = text.rfind("]")
-        if start != -1 and end != -1:
-            json_str = text[start:end+1]
-        else:
-            json_str = text
+        json_str = text
             
     try:
         data = json.loads(json_str)
-        # Ensure it is a list of dicts
+        if isinstance(data, dict) and "plan" in data:
+            data = data["plan"]
         if isinstance(data, list):
             return data
     except Exception as e:
         print(f"Error parsing plan JSON: {e}. Raw text was:\n{text}")
         
-    # Recovery fallback plan (default single-task plan)
     return [{
         "task_id": 1,
         "description": "Execute a single SQL query to answer the question directly.",
@@ -418,6 +427,7 @@ def classify_intent_with_llm(state: AgentState) -> str:
         get_small_llm,
         [SystemMessage(content=system_prompt), HumanMessage(content=human_content)],
         is_large=False,
+        json_mode=True
     )
     try:
         payload = json.loads(response.content.strip())
@@ -483,8 +493,9 @@ def planner_node(state: AgentState) -> Dict[str, Any]:
         "Here is the database schema:\n"
         f"{state['schema']}\n\n"
         "You also have access to the conversation history to help resolve follow-up questions.\n\n"
-        "Return the output ONLY as a valid JSON array of objects. Do not write markdown text, "
-        "explanations, or wrap it in anything other than raw JSON. Use this structure for each task object:\n"
+        "Return the output ONLY as a valid JSON object in this exact format: {\"plan\": [...]}. "
+        "Do not write markdown text, explanations, or wrap it in anything other than raw JSON. "
+        "Inside the 'plan' array, use this structure for each task object:\n"
         "{\n"
         "  \"task_id\": 1,\n"
         "  \"description\": \"Retrieve top 3 categories by total sales\",\n"
@@ -505,10 +516,10 @@ def planner_node(state: AgentState) -> Dict[str, Any]:
         "   - Always include LIMIT 10 (or as appropriate).\n"
         "   - NEVER use MIN() or MAX() alone as the aggregate for ranking — they return edge outliers, not representative rankings.\n"
         "4. CLARIFICATION & OUT-OF-SCOPE HANDLING: \n"
-        "   - If the user query is completely out-of-scope (e.g. general knowledge questions like 'unpad apaan', 'siapa presiden RI', etc.), do NOT generate SQL tasks. Generate a single task object with description explaining politely in English that the question is not relevant to the Olist e-commerce dataset and you cannot answer it. Example: {\"task_id\": 1, \"description\": \"Sorry, your question regarding Universitas Padjadjaran (UNPAD) is not relevant to the Olist e-commerce database. I can only assist you with sales, products, customers, reviews, and delivery operational metrics of Olist.\", \"status\": \"clarification_needed\", \"requires_approval\": false, \"sql_query\": \"\", \"sql_result\": null, \"error_message\": \"\", \"retry_count\": 0}\n"
-        "   - If the user query is about the database but is extremely ambiguous, generate a single task object with description set to a polite clarifying question in English. Example: {\"task_id\": 1, \"description\": \"Sorry, does the sales data you requested refer to total revenue (payment_value) or the number of items sold?\", \"status\": \"clarification_needed\", \"requires_approval\": false, \"sql_query\": \"\", \"sql_result\": null, \"error_message\": \"\", \"retry_count\": 0}\n"
-        "5. HISTORICAL DATASET & RELATIVE TIME: The Olist database contains static historical data from 2016 to 2018. If the user asks questions containing relative time expressions like 'bulan lalu', 'minggu ini', 'tahun lalu', or 'kemarin' without specifying a year, you MUST NOT generate SQL tasks. Instead, generate a single task object with description set to a polite clarifying question in English asking which specific historical month/year they want to check (reminding them that the last complete month is August 2018), and status set to \"clarification_needed\". Example: {\"task_id\": 1, \"description\": \"The Olist database contains static historical transaction data from 2016 to 2018. The latest complete transaction month available is August 2018. Did you mean August 2018, or another specific historical month and year?\", \"status\": \"clarification_needed\", \"requires_approval\": false, \"sql_query\": \"\", \"sql_result\": null, \"error_message\": \"\", \"retry_count\": 0}\n"
-        "6. GREETINGS & SMALL TALK: If the user query is a simple greeting (like 'hi', 'hello', 'halo', 'siang') or small talk, do NOT generate SQL tasks. Instead, generate a single task object with description set to a warm, friendly greeting in English and a brief explanation of what you can help with, and status set to \"clarification_needed\". Example: {\"task_id\": 1, \"description\": \"Hello! I am your Olist e-commerce data analyst assistant. I can help you analyze sales data, product performance, customer reviews, and shipping operational metrics. What would you like to ask?\", \"status\": \"clarification_needed\", \"requires_approval\": false, \"sql_query\": \"\", \"sql_result\": null, \"error_message\": \"\", \"retry_count\": 0}\n"
+        "   - If the user query is completely out-of-scope (e.g. general knowledge questions like 'unpad apaan', 'siapa presiden RI', etc.), do NOT generate SQL tasks. Generate a single task object with description explaining politely in English that the question is not relevant to the Olist e-commerce dataset and you cannot answer it. Example: {\"plan\": [{\"task_id\": 1, \"description\": \"Sorry, your question regarding Universitas Padjadjaran (UNPAD) is not relevant to the Olist e-commerce database. I can only assist you with sales, products, customers, reviews, and delivery operational metrics of Olist.\", \"status\": \"clarification_needed\", \"requires_approval\": false, \"sql_query\": \"\", \"sql_result\": null, \"error_message\": \"\", \"retry_count\": 0}]}\n"
+        "   - If the user query is about the database but is extremely ambiguous, generate a single task object with description set to a polite clarifying question in English. Example: {\"plan\": [{\"task_id\": 1, \"description\": \"Sorry, does the sales data you requested refer to total revenue (payment_value) or the number of items sold?\", \"status\": \"clarification_needed\", \"requires_approval\": false, \"sql_query\": \"\", \"sql_result\": null, \"error_message\": \"\", \"retry_count\": 0}]}\n"
+        "5. HISTORICAL DATASET & RELATIVE TIME: The Olist database contains static historical data from 2016 to 2018. If the user asks questions containing relative time expressions like 'bulan lalu', 'minggu ini', 'tahun lalu', or 'kemarin' without specifying a year, you MUST NOT generate SQL tasks. Instead, generate a single task object with description set to a polite clarifying question in English asking which specific historical month/year they want to check (reminding them that the last complete month is August 2018), and status set to \"clarification_needed\". Example: {\"plan\": [{\"task_id\": 1, \"description\": \"The Olist database contains static historical transaction data from 2016 to 2018. The latest complete transaction month available is August 2018. Did you mean August 2018, or another specific historical month and year?\", \"status\": \"clarification_needed\", \"requires_approval\": false, \"sql_query\": \"\", \"sql_result\": null, \"error_message\": \"\", \"retry_count\": 0}]}\n"
+        "6. GREETINGS & SMALL TALK: If the user query is a simple greeting (like 'hi', 'hello', 'halo', 'siang') or small talk, do NOT generate SQL tasks. Instead, generate a single task object with description set to a warm, friendly greeting in English and a brief explanation of what you can help with, and status set to \"clarification_needed\". Example: {\"plan\": [{\"task_id\": 1, \"description\": \"Hello! I am your Olist e-commerce data analyst assistant. I can help you analyze sales data, product performance, customer reviews, and shipping operational metrics. What would you like to ask?\", \"status\": \"clarification_needed\", \"requires_approval\": false, \"sql_query\": \"\", \"sql_result\": null, \"error_message\": \"\", \"retry_count\": 0}]}\n"
         "7. APPROVAL REQUIREMENT RULE:\n"
         "   - Set \"requires_approval\" to false (default) for clear, standard, and direct database questions where you are highly confident about the table schemas and filter criteria (e.g. simple counting, summing payments, top selling items, order counts, etc.). This executes the query automatically for a faster user experience.\n"
         "   - Set \"requires_approval\" to true ONLY if you are making substantial assumptions about vague business terms, if the request is highly ambiguous/risky, or if you explicitly want the user to double-check and confirm the SQL before execution."
@@ -536,7 +547,7 @@ def planner_node(state: AgentState) -> Dict[str, Any]:
     else:
         messages.append(HumanMessage(content=state["query"]))
         
-    response = invoke_llm_with_retry(get_large_llm, messages, is_large=True)
+    response = invoke_llm_with_retry(get_large_llm, messages, is_large=True, json_mode=True)
     plan_data = parse_plan_json(response.content.strip())
     print(f"  Generated plan: {plan_data}")
     
@@ -576,13 +587,14 @@ def task_executor_node(state: AgentState) -> Dict[str, Any]:
         "7. COMPARING TOP/BEST ITEMS (CROSS JOIN): When asked to retrieve and compare two distinct top items (e.g. the single best-selling product and the single highest-rated product), do NOT use an INNER JOIN on product_id. Since they are likely different physical products, an INNER JOIN on product_id will return 0 rows. Instead, use a CROSS JOIN to combine the single-row subqueries, or combine them using UNION ALL. E.g.:\n"
         "   WITH top_sold AS (SELECT product_id, COUNT(*) as units FROM v_order_items_detailed GROUP BY product_id ORDER BY units DESC LIMIT 1),\n"
         "   top_rated AS (SELECT product_id, AVG(review_score) as rating FROM v_order_reviews_detailed JOIN v_order_items_detailed ON ... GROUP BY product_id ORDER BY rating DESC LIMIT 1)\n"
-        "   SELECT * FROM top_sold CROSS JOIN top_rated;\n\n"
         "8. RANKING QUERIES — MANDATORY PATTERN: For any question asking for best/worst/top/bottom ranking of a product, category, or seller by review score, revenue, or volume:\n"
         "   - Use AVG() for scores/ratings, SUM() for revenue/price, COUNT() for order volume.\n"
         "   - Always add HAVING COUNT(*) >= 5 to exclude items with too few data points.\n"
         "   - Always add ORDER BY <metric> ASC (for worst) or DESC (for best).\n"
         "   - Always add LIMIT 10.\n"
         "   - NEVER use MIN() or MAX() as the ranking aggregate — these return one-off outliers.\n\n"
+        "9. COMPARING GROUPS OR REGIONS: When asked to compare a metric between multiple groups, regions, states, or categories (e.g., SP vs RJ, credit card vs boleto), you MUST select the grouping column (e.g., seller_state, payment_type), include it in the GROUP BY clause, and filter for those specific values using IN. E.g.:\n"
+        "   SELECT seller_state, AVG(freight_value) FROM v_order_items_detailed WHERE seller_state IN ('SP', 'RJ') GROUP BY seller_state;\n\n"
         "Here are examples of how to correctly query the whitelisted Views and tables in the Olist database:\n\n"
         "Example 1: Products with the WORST average review score\n"
         "SELECT oi.product_id, oi.product_category_name_english,\n"
@@ -635,7 +647,10 @@ def task_executor_node(state: AgentState) -> Dict[str, Any]:
         )
         messages.append(HumanMessage(content=retry_prompt))
     else:
-        messages.append(HumanMessage(content=f"Sub-task to complete: {active_task['description']}"))
+        messages.append(HumanMessage(
+            content=f"Original User Question: {state.get('query')}\n"
+                    f"Sub-task to complete: {active_task['description']}"
+        ))
         
     response = invoke_llm_with_retry(get_large_llm, messages, is_large=True)
     sql_text = response.content.strip()
