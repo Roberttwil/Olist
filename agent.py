@@ -63,7 +63,7 @@ current_small_model_idx = 0
 
 def get_groq_api_keys() -> List[str]:
     keys = []
-    for i in range(1, 4):  # supports GROQ_API_KEY_1, _2, _3
+    for i in range(1, 6):  # supports GROQ_API_KEY_1 up to GROQ_API_KEY_5
         key = os.getenv(f"GROQ_API_KEY_{i}")
         if key and "gsk_" in key:
             keys.append(key)
