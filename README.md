@@ -1,5 +1,13 @@
 # Olist E-Commerce Advanced SQL Agent
 
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![LangGraph](https://img.shields.io/badge/LangGraph-orange?style=for-the-badge&logo=chainlink&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS%20RDS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
+![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
+
 An intelligent, production-grade natural language SQL agent for analyzing the **Olist Brazilian E-Commerce Dataset** on AWS RDS. Built using **FastAPI**, **LangGraph**, and **Groq Cloud API** models, featuring a hardened **Planner-Executor-Critic** loop, hybrid auto-run routing, conversational memory checkpoints, and token-limit failover protection.
 
 ---
