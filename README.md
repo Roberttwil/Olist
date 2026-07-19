@@ -71,15 +71,16 @@ graph TD
 ```
 
 ### 2. Node Roles & Model Allocations
-To maintain speed and reduce token costs, tasks are divided between high-capacity **Large Models** and fast, token-efficient **Small Models**:
+To achieve maximum SQL generation accuracy and reasoning quality, tasks are distributed between the high-capacity **Large Model (70B class)** and the fast, token-efficient **Small Model (27B class)**:
 
 | Node Name | Model Utama (1st Choice) | Fallback Models | Technical Role |
 |---|---|---|---|
-| **Planner** | `llama-3.3-70b-versatile` | `openai/gpt-oss-120b`<br>`qwen/qwen3-32b` | Decomposes questions into a JSON task sequence. Handles greetings and clarify relative times (relative time expressions). |
-| **Task Executor** | `llama-3.1-8b-instant` | `qwen/qwen3.6-27b`<br>`openai/gpt-oss-20b` | Generates pure PostgreSQL SELECT syntax. |
-| **Task Critic** | `llama-3.1-8b-instant` | `llama-3.3-70b-versatile` | Local error checker. Invokes AI SQL Auditor if a query succeeds but returns 0 rows (detecting logical JOIN errors). |
-| **Global Synthesizer**| `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Merges query outputs into natural Indonesian reports. |
-| **Global Critic** | `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Rigorous QA auditor checking for hallucinations against history. |
+| **Intent Classifier** | `qwen/qwen3.6-27b` | `openai/gpt-oss-20b` | Classifies query intent (greetings, out-of-scope, or data query) before schema inspection. |
+| **Planner** | `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Decomposes complex questions into a structured plan (JSON object). |
+| **Task Executor** | `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Generates highly accurate PostgreSQL SELECT statements using CTEs, GROUP BY, and aggregates. |
+| **Task Critic** | `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Local error checker. Audits successful queries that return 0 rows to detect logical JOIN failures. |
+| **Global Synthesizer**| `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Synthesizes query results into natural English/Indonesian reports. |
+| **Global Critic** | `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Rigorous quality auditor checking for hallucinations against dataset context. |
 
 ### 3. Semantic Views Layer (Database Optimization)
 We deployed 3 database views to pre-clean relationships and **shrink schema context size by 55%**, preventing token rate limits and mathematical errors (such as the *Fan Effect* payment duplication):
