@@ -409,9 +409,11 @@ def classify_intent_with_llm(state: AgentState) -> str:
         "- ambiguous_time: The user asks an Olist data question using relative time like today, yesterday, this month, last month, or last year without a specific historical year/month.\n"
         "- ambiguous_analytics: The user asks about Olist data, but the metric or analysis target is too vague to choose a safe SQL query.\n\n"
         "Important routing rules:\n"
-        "1. Do not classify broad questions like 'how is sales performance?' as analytical_query unless they specify a concrete metric, grouping, period, ranking, or comparison.\n"
-        "2. Classify weather, politics, general knowledge, coding help, translation, recipes, entertainment, and unrelated campus/company questions as out_of_scope.\n"
-        "3. If the message is a follow-up, use conversation history to resolve whether it is a concrete Olist analytical query.\n"
+        "1. Questions with ranking or superlative words (best, worst, top, bottom, highest, lowest, most, least, paling, terbaik, terburuk, terjelek, tertinggi, terendah, terbanyak, terlaris) ARE concrete analytical queries — classify them as analytical_query.\n"
+        "2. Do not classify broad questions like 'how is sales performance?' as analytical_query unless they specify a concrete metric, grouping, period, ranking, or comparison.\n"
+        "3. Classify weather, politics, general knowledge, coding help, translation, recipes, entertainment, and unrelated campus/company questions as out_of_scope.\n"
+        "4. If the message is a short follow-up (e.g. 'what is the product name?', 'show me the details', 'which city?') and the conversation history contains a prior Olist data question, classify it as analytical_query — not help_request or ambiguous.\n"
+        "5. When in doubt between analytical_query and ambiguous_analytics, prefer analytical_query. Let the planner handle specificity.\n"
     )
     human_content = (
         f"Conversation History:\n{history_context}\n"
