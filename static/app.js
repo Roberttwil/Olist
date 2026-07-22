@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 confirmContainer.style.marginTop = '14px';
 
                 const executeBtn = document.createElement('button');
-                executeBtn.innerHTML = '<i class="fa-solid fa-play"></i> Jalankan Query';
+                executeBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run Query';
                 executeBtn.style.padding = '8px 16px';
                 executeBtn.style.fontSize = '12px';
                 executeBtn.style.fontWeight = '600';
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 executeBtn.style.cursor = 'pointer';
 
                 const cancelBtn = document.createElement('button');
-                cancelBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Batalkan';
+                cancelBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Cancel';
                 cancelBtn.style.padding = '8px 16px';
                 cancelBtn.style.fontSize = '12px';
                 cancelBtn.style.fontWeight = '600';
@@ -210,12 +210,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 cancelBtn.style.cursor = 'pointer';
 
                 executeBtn.addEventListener('click', async () => {
-                    confirmContainer.innerHTML = '<span class="status-text" style="color: var(--primary); font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Menjalankan query di RDS...</span>';
+                    confirmContainer.innerHTML = '<span class="status-text" style="color: var(--primary); font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Executing query on RDS...</span>';
                     await sendConfirmation(true);
                 });
 
                 cancelBtn.addEventListener('click', async () => {
-                    confirmContainer.innerHTML = '<span class="status-text" style="color: var(--text-muted); font-weight:600;"><i class="fa-solid fa-xmark"></i> Membatalkan...</span>';
+                    confirmContainer.innerHTML = '<span class="status-text" style="color: var(--text-muted); font-weight:600;"><i class="fa-solid fa-xmark"></i> Canceling...</span>';
                     await sendConfirmation(false);
                 });
 
