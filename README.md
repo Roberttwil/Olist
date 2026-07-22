@@ -81,13 +81,13 @@ graph TD
 ### 2. Node Roles & Model Allocations
 To achieve maximum SQL generation accuracy and reasoning quality, tasks are distributed between the high-capacity **Large Model (70B class)** and the fast, token-efficient **Small Model (27B class)**:
 
-| Node Name | Model Utama (1st Choice) | Fallback Models | Technical Role |
+| Node Name | Primary Model (1st Choice) | Fallback Models | Technical Role |
 |---|---|---|---|
 | **Intent Classifier** | `qwen/qwen3.6-27b` | `openai/gpt-oss-20b` | Classifies query intent (greetings, out-of-scope, or data query) before schema inspection. |
 | **Planner** | `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Decomposes complex questions into a structured plan (JSON object). |
 | **Task Executor** | `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Generates highly accurate PostgreSQL SELECT statements using CTEs, GROUP BY, and aggregates. |
 | **Task Critic** | `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Local error checker. Audits successful queries that return 0 rows to detect logical JOIN failures. |
-| **Global Synthesizer**| `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Synthesizes query results into natural English/Indonesian reports. |
+| **Global Synthesizer**| `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Synthesizes query results into natural English reports. |
 | **Global Critic** | `llama-3.3-70b-versatile` | `openai/gpt-oss-120b` | Rigorous quality auditor checking for hallucinations against dataset context. |
 
 ### 3. Semantic Views Layer (Database Optimization)
