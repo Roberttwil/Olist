@@ -894,6 +894,7 @@ def global_critic_node(state: AgentState) -> Dict[str, Any]:
     Global Critic (Large Model): Checks if the final answer actually answers the user's intent.
     If flawed, triggers re-planning. Auto-approves clarification.
     """
+    plan = state.get("plan", [])
     if any(
         task.get("status") == "failed" and "canceled" in task.get("error_message", "").lower()
         for task in plan
