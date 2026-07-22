@@ -449,34 +449,54 @@ def get_direct_response_plan(query: str) -> Union[List[Dict[str, Any]], None]:
 
 def intent_classifier_node(state: AgentState) -> Dict[str, Any]:
     print("[Node: intent_classifier] Classifying user intent before schema/SQL planning...")
-    query = state.get("query", "")
-    intent = classify_intent_deterministic(query)
-    if intent is None:
-        intent = classify_intent_with_llm(state)
+    try:
+        query = state.get("query", "")
+        intent = classify_intent_deterministic(query)
+        if intent is None:
+            intent = classify_intent_with_llm(state)
 
-    print(f"  Intent: {intent}")
-    if intent in DIRECT_INTENT_MESSAGES:
+        print(f"  Intent: {intent}")
+        if intent in DIRECT_INTENT_MESSAGES:
+            return {
+                "intent": intent,
+                "plan": make_clarification_plan(DIRECT_INTENT_MESSAGES[intent]),
+                "current_task_idx": 0,
+                "task_results": {},
+                "eval_feedback": "",
+                "schema": "",
+            }
+
         return {
-            "intent": intent,
-            "plan": make_clarification_plan(DIRECT_INTENT_MESSAGES[intent]),
+            "intent": "analytical_query",
+            "plan": [],
+            "current_task_idx": 0,
+            "task_results": {},
+            "eval_feedback": "",
+        }
+    except Exception as e:
+        print(f"Error in intent_classifier_node: {e}")
+        return {
+            "intent": "out_of_scope",
+            "plan": make_clarification_plan("Sorry, I encountered an internal error processing your request."),
             "current_task_idx": 0,
             "task_results": {},
             "eval_feedback": "",
             "schema": "",
+            "final_answer": f"Sorry, I encountered an error: {str(e)}"
         }
-
-    return {
-        "intent": "analytical_query",
-        "plan": [],
-        "current_task_idx": 0,
-        "task_results": {},
-        "eval_feedback": "",
-    }
 
 def schema_inspector_node(state: AgentState) -> Dict[str, Any]:
     print("[Node: schema_inspector] Inspecting database DDL and sample data...")
-    schema = get_database_schema()
-    return {"schema": schema}
+    try:
+        schema = get_database_schema()
+        return {"schema": schema}
+    except Exception as e:
+        print(f"Error in schema_inspector_node: {e}")
+        return {
+            "schema": "",
+            "plan": make_clarification_plan(f"Error connecting to database: {str(e)}"),
+            "final_answer": f"Sorry, I encountered an error: {str(e)}"
+        }
 
 def planner_node(state: AgentState) -> Dict[str, Any]:
     """
