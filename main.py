@@ -303,7 +303,7 @@ async def chat_endpoint(payload: ChatRequest):
         # Force-reset the thread state in the checkpointer to the initial state
         # This prevents LangGraph from trying to resume any previous failed/interrupted runs on this thread
         agent_graph.update_state(config, initial_state)
-        result = agent_graph.invoke(None, config)
+        result = agent_graph.invoke(initial_state, config)
         
         # Check if the graph is currently paused at the query_runner node
         new_state_info = agent_graph.get_state(config)
