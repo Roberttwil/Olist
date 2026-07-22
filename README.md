@@ -159,8 +159,8 @@ Here are actual verification outputs tested directly on the production container
 
 1.  **Clone the Repository:**
     ```bash
-    git clone https://github.com/your-username/olist-sql-agent.git
-    cd olist-sql-agent
+    git clone https://github.com/Roberttwil/Olist.git
+    cd Olist
     ```
 2.  **Environment Setup:**
     ```bash
