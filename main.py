@@ -324,7 +324,7 @@ async def chat_endpoint(payload: ChatRequest):
                 "thread_id": thread_id,
                 "query": result["query"],
                 "generated_sql": agent_sql,
-                "final_answer": "Saya telah merancang query SQL berikut. Apakah Anda ingin mengeksekusinya di database AWS RDS?"
+                "final_answer": "I have designed the following SQL query. Do you want to execute it against the AWS RDS database?"
             }
             
         # Normal completion (e.g. clarification needed, or direct answers that didn't hit SQL runner)
